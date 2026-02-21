@@ -55,16 +55,18 @@ export const FINGERPRINT_RULES: FingerprintRule[] = [
             "Accept includes `text/markdown`",
             "Accept-Encoding includes `compress`",
             "Missing `accept-language` header",
+            "Falls to CLI Tool if zero header signals match (generic axios)",
         ],
     },
     {
         name: "Copilot (VS Code)",
         type: "AI Coding Tool",
         confidence: "High",
-        uaPattern: "UA contains `Code/` and `Electron/`",
+        uaPattern: "UA matches `\\bCode/\\d` + `Electron/`",
         headerSignals: [
             "`dnt: 1` header present",
             "`sec-gpc: 1` header present",
+            "Requires at least one privacy header; falls to Unknown otherwise",
         ],
     },
     {
@@ -83,7 +85,12 @@ export const FINGERPRINT_RULES: FingerprintRule[] = [
         type: "AI Coding Tool",
         confidence: "Medium",
         uaPattern: "UA is `Go-http-client`",
-        headerSignals: ["Minimal header count (typically < 5)"],
+        headerSignals: [
+            "Header count <= 4",
+            "Missing `accept` header",
+            "Missing `accept-language` header",
+            "Falls to Datacenter Bot if headers are richer (generic Go service)",
+        ],
     },
     {
         name: "cURL / Wget",
@@ -117,8 +124,8 @@ export const FINGERPRINT_RULES: FingerprintRule[] = [
         name: "Generic Bot/Crawler",
         type: "Datacenter Bot",
         confidence: "Medium",
-        uaPattern: "UA contains `bot`, `spider`, `scraper`, or `crawler`",
-        headerSignals: ["Standard bot identification strings"],
+        uaPattern: "UA matches `\\bbot\\b`, `\\bspider\\b`, `scraper`, or `crawler`",
+        headerSignals: ["Word-boundary matching to avoid brand names (e.g. Cubot)"],
     },
     {
         name: "Real Chrome Browser",
@@ -183,21 +190,31 @@ export function classifyAgent(userAgent: string | null, requestHeaders: Record<s
         const hasCompress = headerContains(requestHeaders, "accept-encoding", "compress");
         const noAcceptLang = !hasHeader(requestHeaders, "accept-language");
 
-        if (hasMarkdownAccept && hasCompress && noAcceptLang) {
+        const signalCount = [hasMarkdownAccept, hasCompress, noAcceptLang].filter(Boolean).length;
+
+        if (signalCount >= 3) {
             return { type: "AI Coding Tool", confidence: "High", name: "Claude Code" };
         }
-        // Even without all signals, axios/ is unusual enough
-        return { type: "AI Coding Tool", confidence: "Medium", name: "Claude Code (likely)" };
+        if (signalCount >= 1) {
+            return { type: "AI Coding Tool", confidence: "Medium", name: "Claude Code (likely)" };
+        }
+        // axios/ with zero header signals — probably just a Node.js app
+        return { type: "CLI Tool", confidence: "Low", name: "axios HTTP Client" };
     }
 
     // --- Priority 3: Copilot (VS Code Electron) ---
-    if (uaLower.includes("code/") && uaLower.includes("electron/")) {
+    // Use word-boundary-like regex to match "Code/1.x" not "sourcecode/" or "barcode/"
+    if (/\bcode\/\d/i.test(userAgent) && uaLower.includes("electron/")) {
         const hasDnt = getHeader(requestHeaders, "dnt") === "1";
         const hasSecGpc = getHeader(requestHeaders, "sec-gpc") === "1";
         if (hasDnt && hasSecGpc) {
             return { type: "AI Coding Tool", confidence: "High", name: "Copilot (VS Code)" };
         }
-        return { type: "AI Coding Tool", confidence: "Medium", name: "VS Code Extension (likely Copilot)" };
+        if (hasDnt || hasSecGpc) {
+            return { type: "AI Coding Tool", confidence: "Medium", name: "VS Code Extension (likely Copilot)" };
+        }
+        // Electron + Code in UA but no privacy headers — could be VS Code Simple Browser or other Electron app
+        return { type: "Unknown", confidence: "Low", name: "VS Code / Electron App" };
     }
 
     // --- Priority 4: OpenCode ---
@@ -213,14 +230,19 @@ export function classifyAgent(userAgent: string | null, requestHeaders: Record<s
         }
     }
 
-    // --- Priority 5: Antigravity (Go-http-client) ---
+    // --- Priority 5: Go-http-client (Antigravity and other Go tools) ---
+    // Many Go programs use default net/http UA, so we need more than just the UA.
+    // Antigravity typically sends very few headers (< 5) and no Accept header.
     if (uaLower.includes("go-http-client")) {
         const headerCount = Object.keys(requestHeaders).length;
-        return {
-            type: "AI Coding Tool",
-            confidence: headerCount < 5 ? "Medium" : "Low",
-            name: "Antigravity (Go HTTP)",
-        };
+        const hasAccept = hasHeader(requestHeaders, "accept");
+        const hasAcceptLang = hasHeader(requestHeaders, "accept-language");
+
+        if (headerCount <= 4 && !hasAccept && !hasAcceptLang) {
+            return { type: "AI Coding Tool", confidence: "Medium", name: "Antigravity (Go HTTP)" };
+        }
+        // Go-http-client with richer headers — generic Go service, not specifically Antigravity
+        return { type: "Datacenter Bot", confidence: "Low", name: "Go HTTP Client" };
     }
 
     // --- Priority 6: CLI tools ---
@@ -240,7 +262,8 @@ export function classifyAgent(userAgent: string | null, requestHeaders: Record<s
     }
 
     // --- Priority 8: Generic bots ---
-    if (uaLower.includes("bot") || uaLower.includes("spider") || uaLower.includes("scraper") || uaLower.includes("crawler")) {
+    // Use word boundaries to avoid matching brand names like "Cubot" or "Aboutblank"
+    if (/\bbot\b/i.test(userAgent) || /\bspider\b/i.test(userAgent) || uaLower.includes("scraper") || uaLower.includes("crawler")) {
         return { type: "Datacenter Bot", confidence: "Medium", name: "Generic Bot/Crawler" };
     }
 
