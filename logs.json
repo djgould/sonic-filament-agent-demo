@@ -1,0 +1,220 @@
+[
+  {
+    "id": "1c8c2a19-fc07-437e-b47f-911193571bd5",
+    "timestamp": "2026-02-21T15:18:31.226Z",
+    "ip": "::1",
+    "userAgent": "ScraperBot/1.0",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "ScraperBot/1.0",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "fa34ac6c-5c2c-49f3-94ad-9b93bc7f9c15",
+    "timestamp": "2026-02-21T15:18:30.699Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/120.0.0.0 Safari/537.36",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/120.0.0.0 Safari/537.36",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "bd21176e-eab4-4472-9103-8b85a872769c",
+    "timestamp": "2026-02-21T15:18:30.180Z",
+    "ip": "::1",
+    "userAgent": "python-requests/2.31.0",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "python-requests/2.31.0",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "c822ebb4-0dab-4cff-a4cf-f24a6cc0c33c",
+    "timestamp": "2026-02-21T15:18:29.661Z",
+    "ip": "::1",
+    "userAgent": "curl/8.4.0",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "curl/8.4.0",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "dfe2cbc1-37f9-4e60-a2a0-c9c374ccec8e",
+    "timestamp": "2026-02-21T15:18:29.143Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "d1bdaa6b-cbe5-4de5-b647-6ba0811dc518",
+    "timestamp": "2026-02-21T15:17:28.322Z",
+    "ip": "::1",
+    "userAgent": "Go-http-client/1.1",
+    "headers": {
+      "accept-encoding": "gzip",
+      "host": "localhost:3000",
+      "user-agent": "Go-http-client/1.1",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "287cfab2-8647-4e7d-8511-35ace41001de",
+    "timestamp": "2026-02-21T15:17:28.317Z",
+    "ip": "::1",
+    "userAgent": "Go-http-client/1.1",
+    "headers": {
+      "host": "localhost:3000",
+      "user-agent": "Go-http-client/1.1",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "HEAD",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "2dea2136-eeae-451d-bf9a-4beaceca0955",
+    "timestamp": "2026-02-21T15:16:06.472Z",
+    "ip": "::1",
+    "userAgent": "curl/8.7.1",
+    "headers": {
+      "accept": "*/*",
+      "host": "localhost:3000",
+      "user-agent": "curl/8.7.1",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "5f370372-3dc6-4319-b9da-49a38c58c936",
+    "timestamp": "2026-02-21T15:10:37.499Z",
+    "ip": "::1",
+    "userAgent": "python-requests/2.31.0",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "python-requests/2.31.0",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "776f8b65-5f4e-48f0-94b3-ee07c63d4f4e",
+    "timestamp": "2026-02-21T15:10:36.986Z",
+    "ip": "::1",
+    "userAgent": "curl/8.4.0",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "curl/8.4.0",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  },
+  {
+    "id": "79aa7fec-a926-4d21-9b19-6c39148c9f22",
+    "timestamp": "2026-02-21T15:10:36.467Z",
+    "ip": "::1",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "headers": {
+      "accept": "*/*",
+      "accept-encoding": "gzip, deflate",
+      "accept-language": "*",
+      "connection": "keep-alive",
+      "host": "localhost:3000",
+      "sec-fetch-mode": "cors",
+      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "x-forwarded-for": "::1",
+      "x-forwarded-host": "localhost:3000",
+      "x-forwarded-port": "3000",
+      "x-forwarded-proto": "http"
+    },
+    "method": "GET",
+    "url": "http://localhost:3000/api/track"
+  }
+]

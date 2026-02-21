@@ -1,0 +1,64 @@
+import { list, put } from "@vercel/blob";
+import fs from "fs/promises";
+import path from "path";
+
+export interface AttributionEvent {
+    id: string;
+    timestamp: string;
+    ip: string | null;
+    userAgent: string | null;
+    headers: Record<string, string>;
+    method: string;
+    url: string;
+}
+
+const BLOB_FILENAME = "logs.json";
+const LOCAL_FS_PATH = path.join(process.cwd(), "logs.json");
+
+export async function getLogsFromBlob(): Promise<AttributionEvent[]> {
+    try {
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+            // Fallback to local FS for development before Vercel link
+            try {
+                const data = await fs.readFile(LOCAL_FS_PATH, "utf-8");
+                return JSON.parse(data);
+            } catch (e) {
+                return [];
+            }
+        }
+
+        const { blobs } = await list({ prefix: BLOB_FILENAME });
+        if (blobs.length === 0) return [];
+
+        // Sort to get newest
+        blobs.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
+
+        const res = await fetch(blobs[0].url, { cache: "no-store" });
+        if (!res.ok) return [];
+
+        return await res.json();
+    } catch (e) {
+        console.error("Failed to read from blob:", e);
+        return [];
+    }
+}
+
+export async function saveLogToBlob(event: AttributionEvent) {
+    try {
+        const currentLogs = await getLogsFromBlob();
+        const updatedLogs = [event, ...currentLogs].slice(0, 100);
+
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+            // Fallback to local FS
+            await fs.writeFile(LOCAL_FS_PATH, JSON.stringify(updatedLogs, null, 2));
+            return;
+        }
+
+        await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
+            access: "public",
+            addRandomSuffix: false,
+        });
+    } catch (e) {
+        console.error("Failed to write to blob", e);
+    }
+}
