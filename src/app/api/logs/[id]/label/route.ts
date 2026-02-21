@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, initDb } from "@/lib/db";
+import { getDb, initDb } from "@/lib/db";
 
 export async function PATCH(
     request: NextRequest,
@@ -14,13 +14,14 @@ export async function PATCH(
             return NextResponse.json({ error: "Invalid label value" }, { status: 400 });
         }
 
+        const sql = getDb();
         await initDb();
 
-        await query(`
+        await sql`
             UPDATE agent_attribution_logs 
-            SET label = $1 
-            WHERE id = $2
-        `, [label, id]);
+            SET label = ${label} 
+            WHERE id = ${id}
+        `;
 
         return NextResponse.json({ success: true });
     } catch (error) {

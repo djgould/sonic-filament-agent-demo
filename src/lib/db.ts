@@ -11,28 +11,18 @@ export interface AttributionEvent {
     label?: string | null;
 }
 
-export function getDbString() {
+export function getDb() {
     if (!process.env.DATABASE_URL) {
         throw new Error("DATABASE_URL is not defined in the environment.");
     }
-    return process.env.DATABASE_URL;
-}
-
-export async function query(text: string, params: any[] = []) {
-    const dbUrl = getDbString();
-
-    // As of recent @neondatabase/serverless versions, you must use sql.query for string-based parameterized DB inserts
-    // e.g sql.query("INSERT INTO foo (id) VALUES ($1)", [1]) rather than sql("INSERT INTO foo... ", [1])
-    const sql = neon(dbUrl);
-
-    // Typecast to bypass TS not perfectly exposing query on neon tagged template instances in all environments
-    return await (sql as any).query(text, params);
+    return neon(process.env.DATABASE_URL);
 }
 
 // Ensures the table is created
 export async function initDb() {
     try {
-        await query(`
+        const sql = getDb();
+        await sql`
             CREATE TABLE IF NOT EXISTS agent_attribution_logs (
                 id UUID PRIMARY KEY,
                 timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -43,40 +33,42 @@ export async function initDb() {
                 url TEXT,
                 label VARCHAR(255)
             );
-        `);
+        `;
     } catch (e) {
         console.error("Failed to initialize database table:", e);
     }
 }
 
 export async function saveLogToDb(event: AttributionEvent) {
+    const sql = getDb();
     await initDb(); // Ensure table exists for our demo
 
-    await query(`
+    await sql`
         INSERT INTO agent_attribution_logs (id, timestamp, ip, user_agent, headers, method, url)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [
-        event.id,
-        event.timestamp,
-        event.ip,
-        event.userAgent,
-        event.headers,
-        event.method,
-        event.url
-    ]);
+        VALUES (
+            ${event.id}, 
+            ${event.timestamp}, 
+            ${event.ip}, 
+            ${event.userAgent}, 
+            ${JSON.stringify(event.headers)}::jsonb, 
+            ${event.method}, 
+            ${event.url}
+        )
+    `;
 }
 
 export async function getLogsFromDb(): Promise<AttributionEvent[]> {
+    const sql = getDb();
     await initDb();
 
-    const result = await query(`
+    const rows = await sql`
         SELECT * FROM agent_attribution_logs
         ORDER BY timestamp DESC
         LIMIT 100;
-    `);
+    `;
 
     // Ensure we handle date formatting robustly
-    return result.rows.map((row: any) => ({
+    return rows.map((row: any) => ({
         id: row.id,
         timestamp: typeof row.timestamp === 'string' ? new Date(row.timestamp).toISOString() : row.timestamp.toISOString(),
         ip: row.ip,
