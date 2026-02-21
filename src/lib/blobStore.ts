@@ -40,12 +40,16 @@ export async function getLogsFromBlob(): Promise<AttributionEvent[]> {
 
         const targetUrl = blobs[0].downloadUrl || blobs[0].url;
         const res = await fetch(targetUrl, { cache: "no-store" });
-        if (!res.ok) return [];
+        if (!res.ok) {
+            console.error("Failed to fetch blob contents:", res.statusText);
+            return [];
+        }
 
         return await res.json();
     } catch (e) {
         console.error("Failed to read from blob:", e);
-        return [];
+        // Throw the error so the API route can handle it and we don't silently fail
+        throw e;
     }
 }
 
@@ -64,23 +68,13 @@ export async function saveLogToBlob(event: AttributionEvent) {
             return;
         }
 
-        try {
-            await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
-                access: "public",
-                addRandomSuffix: false,
-            });
-        } catch (putError: any) {
-            // fallback if the user configured a private store in Vercel
-            if (putError.message?.includes("private store") || putError.message?.includes("private access")) {
-                await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
-                    access: "private",
-                    addRandomSuffix: false,
-                });
-            } else {
-                throw putError;
-            }
-        }
+        await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
+            access: "private",
+            addRandomSuffix: false,
+        });
     } catch (e) {
         console.error("Failed to write to blob", e);
+        // Throw so we know it failed
+        throw e;
     }
 }
