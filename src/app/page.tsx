@@ -14,6 +14,63 @@ interface AttributionEvent {
   label?: string | null;
 }
 
+function LabelEditor({ initialLabel, onSave }: { initialLabel: string; onSave: (label: string) => void }) {
+  const [isEditingCustom, setIsEditingCustom] = useState(false);
+  const [customValue, setCustomValue] = useState(initialLabel);
+
+  const predefinedOptions = ["Valid User", "Internal Test", "Suspicious Bot", "Automated Scraper", "Ignore"];
+  const isCustomOption = initialLabel && !predefinedOptions.includes(initialLabel);
+
+  if (isEditingCustom) {
+    return (
+      <input
+        type="text"
+        autoFocus
+        placeholder="Type custom label..."
+        value={customValue}
+        onChange={e => setCustomValue(e.target.value)}
+        onBlur={() => {
+          if (customValue !== initialLabel) onSave(customValue);
+          setIsEditingCustom(false);
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            if (customValue !== initialLabel) onSave(customValue);
+            setIsEditingCustom(false);
+          }
+          if (e.key === 'Escape') {
+            setCustomValue(initialLabel);
+            setIsEditingCustom(false);
+          }
+        }}
+        className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-300 w-full focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder:text-neutral-600"
+      />
+    );
+  }
+
+  return (
+    <select
+      value={isCustomOption ? initialLabel : (initialLabel || "")}
+      onChange={(e) => {
+        if (e.target.value === "Other...") {
+          setIsEditingCustom(true);
+          setCustomValue("");
+        } else {
+          onSave(e.target.value);
+        }
+      }}
+      className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-300 w-full focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors cursor-pointer"
+    >
+      <option value="" disabled>Select a label...</option>
+      {predefinedOptions.map(opt => (
+        <option key={opt} value={opt}>{opt}</option>
+      ))}
+      {isCustomOption && <option value={initialLabel}>{initialLabel}</option>}
+      <option value="Other..." className="font-bold text-emerald-400">Other (Custom...)</option>
+    </select>
+  );
+}
+
 export default function Dashboard() {
   const [logs, setLogs] = useState<AttributionEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,21 +244,9 @@ export default function Dashboard() {
                           {log.userAgent || <span className="text-neutral-600 italic">None provided</span>}
                         </td>
                         <td className="px-6 py-4">
-                          <input
-                            type="text"
-                            placeholder="Add label..."
-                            defaultValue={log.label || ""}
-                            onBlur={(e) => {
-                              if (e.target.value !== (log.label || "")) {
-                                handleLabelChange(log.id, e.target.value);
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.currentTarget.blur();
-                              }
-                            }}
-                            className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-300 w-full focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder:text-neutral-600"
+                          <LabelEditor
+                            initialLabel={log.label || ""}
+                            onSave={(newLabel) => handleLabelChange(log.id, newLabel)}
                           />
                         </td>
                         <td className="px-6 py-4 text-right">
