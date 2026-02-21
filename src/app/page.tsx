@@ -11,6 +11,7 @@ interface AttributionEvent {
   headers: Record<string, string>;
   method: string;
   url: string;
+  label?: string | null;
 }
 
 export default function Dashboard() {
@@ -46,6 +47,21 @@ export default function Dashboard() {
     const interval = setInterval(fetchLogs, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleLabelChange = async (id: string, newLabel: string) => {
+    // Optimistic update
+    setLogs(prev => prev.map(log => log.id === id ? { ...log, label: newLabel } : log));
+
+    try {
+      await fetch(`/api/logs/${id}/label`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: newLabel || null }),
+      });
+    } catch (e) {
+      console.error("Failed to update label:", e);
+    }
+  };
 
   const displayLogs = filterMyIp ? logs.filter(l => l.ip === myIp) : logs;
 
@@ -122,19 +138,20 @@ export default function Dashboard() {
                   <th className="px-6 py-4 border-b border-neutral-800">Classification</th>
                   <th className="px-6 py-4 border-b border-neutral-800">Source IP</th>
                   <th className="px-6 py-4 border-b border-neutral-800 max-w-sm">Raw User-Agent</th>
+                  <th className="px-6 py-4 border-b border-neutral-800">Label</th>
                   <th className="px-6 py-4 border-b border-neutral-800 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-800/60">
                 {loading && displayLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-neutral-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-neutral-500">
                       Loading data stream...
                     </td>
                   </tr>
                 ) : displayLogs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-neutral-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-neutral-500">
                       <div className="max-w-sm mx-auto space-y-2">
                         <p>No attribution events captured yet.</p>
                         <p className="text-xs">Run <code className="bg-neutral-800 px-1 rounded text-emerald-400">curl http://localhost:3000/api/track</code> in your terminal to see it in action.</p>
@@ -168,6 +185,24 @@ export default function Dashboard() {
                         </td>
                         <td className="px-6 py-4 text-neutral-400 max-w-sm truncate text-xs" title={log.userAgent || "None"}>
                           {log.userAgent || <span className="text-neutral-600 italic">None provided</span>}
+                        </td>
+                        <td className="px-6 py-4">
+                          <input
+                            type="text"
+                            placeholder="Add label..."
+                            defaultValue={log.label || ""}
+                            onBlur={(e) => {
+                              if (e.target.value !== (log.label || "")) {
+                                handleLabelChange(log.id, e.target.value);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.currentTarget.blur();
+                              }
+                            }}
+                            className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-300 w-full focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder:text-neutral-600"
+                          />
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button

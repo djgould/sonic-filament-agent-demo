@@ -8,6 +8,7 @@ export interface AttributionEvent {
     headers: Record<string, string>;
     method: string;
     url: string;
+    label?: string | null;
 }
 
 export function getDb() {
@@ -31,6 +32,9 @@ export async function initDb() {
                 method VARCHAR(16),
                 url TEXT
             );
+            
+            -- Add label column if it doesn't exist (for existing tables prior to Phase 3)
+            ALTER TABLE agent_attribution_logs ADD COLUMN IF NOT EXISTS label VARCHAR(255);
         `;
     } catch (e) {
         console.error("Failed to initialize database table:", e);
@@ -72,6 +76,7 @@ export async function getLogsFromDb(): Promise<AttributionEvent[]> {
         userAgent: row.user_agent,
         headers: row.headers,
         method: row.method,
-        url: row.url
+        url: row.url,
+        label: row.label
     }));
 }
