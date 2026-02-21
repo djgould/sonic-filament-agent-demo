@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { saveLogToBlob, AttributionEvent } from "@/lib/blobStore";
+import { saveLogToDb, AttributionEvent } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
   return handleTracking(req);
@@ -32,7 +32,7 @@ async function handleTracking(req: NextRequest) {
   };
 
   try {
-    await saveLogToBlob(event);
+    await saveLogToDb(event);
 
     return NextResponse.json({
       success: true,
