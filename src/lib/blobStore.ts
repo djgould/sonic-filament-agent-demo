@@ -38,7 +38,8 @@ export async function getLogsFromBlob(): Promise<AttributionEvent[]> {
         // Sort to get newest
         blobs.sort((a, b) => b.uploadedAt.getTime() - a.uploadedAt.getTime());
 
-        const res = await fetch(blobs[0].url, { cache: "no-store" });
+        const targetUrl = blobs[0].downloadUrl || blobs[0].url;
+        const res = await fetch(targetUrl, { cache: "no-store" });
         if (!res.ok) return [];
 
         return await res.json();
@@ -63,10 +64,22 @@ export async function saveLogToBlob(event: AttributionEvent) {
             return;
         }
 
-        await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
-            access: "public",
-            addRandomSuffix: false,
-        });
+        try {
+            await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
+                access: "public",
+                addRandomSuffix: false,
+            });
+        } catch (putError: any) {
+            // fallback if the user configured a private store in Vercel
+            if (putError.message?.includes("private store") || putError.message?.includes("private access")) {
+                await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
+                    access: "private",
+                    addRandomSuffix: false,
+                });
+            } else {
+                throw putError;
+            }
+        }
     } catch (e) {
         console.error("Failed to write to blob", e);
     }
