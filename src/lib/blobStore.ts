@@ -71,6 +71,7 @@ export async function saveLogToBlob(event: AttributionEvent) {
         await put(BLOB_FILENAME, JSON.stringify(updatedLogs), {
             access: "private",
             addRandomSuffix: false,
+            allowOverwrite: true
         });
     } catch (e) {
         console.error("Failed to write to blob", e);
