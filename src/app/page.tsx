@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { classifyAgent } from "@/lib/classify";
+import { classifyAgent, getBadgeClasses } from "@/lib/classify";
 
 interface AttributionEvent {
   id: string;
@@ -304,13 +304,7 @@ export default function Dashboard() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium w-fit
-                              ${classification.type === 'Human' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : ''}
-                              ${classification.type === 'CLI Tool' ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : ''}
-                              ${classification.type === 'Headless Browser' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' : ''}
-                              ${classification.type === 'Datacenter Bot' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : ''}
-                              ${classification.type === 'Unknown' ? 'bg-neutral-700 border border-neutral-600' : ''}
-                            `}>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium w-fit ${getBadgeClasses(classification.type)}`}>
                               {classification.type}
                             </span>
                             <span className="text-xs text-neutral-500">{classification.name}</span>
