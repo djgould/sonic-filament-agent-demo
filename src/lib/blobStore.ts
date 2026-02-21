@@ -18,11 +18,16 @@ const LOCAL_FS_PATH = path.join(process.cwd(), "logs.json");
 export async function getLogsFromBlob(): Promise<AttributionEvent[]> {
     try {
         if (!process.env.BLOB_READ_WRITE_TOKEN) {
-            // Fallback to local FS for development before Vercel link
-            try {
-                const data = await fs.readFile(LOCAL_FS_PATH, "utf-8");
-                return JSON.parse(data);
-            } catch (e) {
+            // Fallback to local FS only in development
+            if (process.env.NODE_ENV === "development") {
+                try {
+                    const data = await fs.readFile(LOCAL_FS_PATH, "utf-8");
+                    return JSON.parse(data);
+                } catch (e) {
+                    return [];
+                }
+            } else {
+                console.warn("BLOB_READ_WRITE_TOKEN missing in production. Returning empty logs.");
                 return [];
             }
         }
@@ -49,8 +54,12 @@ export async function saveLogToBlob(event: AttributionEvent) {
         const updatedLogs = [event, ...currentLogs].slice(0, 100);
 
         if (!process.env.BLOB_READ_WRITE_TOKEN) {
-            // Fallback to local FS
-            await fs.writeFile(LOCAL_FS_PATH, JSON.stringify(updatedLogs, null, 2));
+            if (process.env.NODE_ENV === "development") {
+                // Fallback to local FS
+                await fs.writeFile(LOCAL_FS_PATH, JSON.stringify(updatedLogs, null, 2));
+            } else {
+                console.warn("BLOB_READ_WRITE_TOKEN missing in production. Skipping log save.");
+            }
             return;
         }
 
