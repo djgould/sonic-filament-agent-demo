@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { classifyAgent } from "@/lib/classify";
 
 interface AttributionEvent {
@@ -14,60 +14,119 @@ interface AttributionEvent {
   label?: string | null;
 }
 
-function LabelEditor({ initialLabel, onSave }: { initialLabel: string; onSave: (label: string) => void }) {
-  const [isEditingCustom, setIsEditingCustom] = useState(false);
-  const [customValue, setCustomValue] = useState(initialLabel);
+const DEFAULT_SUGGESTIONS = ["Claude Code", "Codex", "OpenCode", "Cursor", "Windsurf", "Copilot", "Devin", "Human"];
 
-  const predefinedOptions = ["Valid User", "Internal Test", "Suspicious Bot", "Automated Scraper", "Ignore"];
-  const isCustomOption = initialLabel && !predefinedOptions.includes(initialLabel);
+function LabelEditor({ initialLabel, onSave, dbLabels }: { initialLabel: string; onSave: (label: string) => void; dbLabels: string[] }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  if (isEditingCustom) {
-    return (
-      <input
-        type="text"
-        autoFocus
-        placeholder="Type custom label..."
-        value={customValue}
-        onChange={e => setCustomValue(e.target.value)}
-        onBlur={() => {
-          if (customValue !== initialLabel) onSave(customValue);
-          setIsEditingCustom(false);
-        }}
-        onKeyDown={e => {
-          if (e.key === 'Enter') {
-            if (customValue !== initialLabel) onSave(customValue);
-            setIsEditingCustom(false);
-          }
-          if (e.key === 'Escape') {
-            setCustomValue(initialLabel);
-            setIsEditingCustom(false);
-          }
-        }}
-        className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-300 w-full focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder:text-neutral-600"
-      />
-    );
-  }
+  // Merge DB labels with defaults, deduplicated
+  const allLabels = Array.from(new Set([...dbLabels, ...DEFAULT_SUGGESTIONS]));
+
+  const filtered = query
+    ? allLabels.filter(l => l.toLowerCase().includes(query.toLowerCase()))
+    : allLabels;
+
+  const exactMatch = allLabels.some(l => l.toLowerCase() === query.toLowerCase());
+
+  const handleSelect = useCallback((label: string) => {
+    onSave(label);
+    setIsOpen(false);
+    setQuery("");
+  }, [onSave]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setQuery("");
+      }
+    }
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
 
   return (
-    <select
-      value={isCustomOption ? initialLabel : (initialLabel || "")}
-      onChange={(e) => {
-        if (e.target.value === "Other...") {
-          setIsEditingCustom(true);
-          setCustomValue("");
-        } else {
-          onSave(e.target.value);
-        }
-      }}
-      className="bg-neutral-900 border border-neutral-700 rounded px-2 py-1 text-xs text-neutral-300 w-full focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors cursor-pointer"
-    >
-      <option value="" disabled>Select a label...</option>
-      {predefinedOptions.map(opt => (
-        <option key={opt} value={opt}>{opt}</option>
-      ))}
-      {isCustomOption && <option value={initialLabel}>{initialLabel}</option>}
-      <option value="Other..." className="font-bold text-emerald-400">Other (Custom...)</option>
-    </select>
+    <div ref={containerRef} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors cursor-pointer ${
+          initialLabel
+            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+            : "bg-neutral-800 text-neutral-500 border border-neutral-700 hover:bg-neutral-700 hover:text-neutral-300"
+        }`}
+      >
+        {initialLabel || "Unlabeled"}
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1 left-0 w-56 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl shadow-black/50 overflow-hidden">
+          <div className="p-2 border-b border-neutral-800">
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Search or add label..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === "Enter" && query.trim()) {
+                  // If there's an exact match in filtered, select it; otherwise add new
+                  const match = filtered.find(l => l.toLowerCase() === query.toLowerCase());
+                  handleSelect(match || query.trim());
+                }
+              }}
+              className="w-full bg-neutral-800 border border-neutral-700 rounded px-2 py-1.5 text-xs text-neutral-300 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors placeholder:text-neutral-600"
+            />
+          </div>
+          <ul className="max-h-48 overflow-y-auto py-1">
+            {filtered.map(label => (
+              <li key={label}>
+                <button
+                  onClick={() => handleSelect(label)}
+                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-neutral-800 cursor-pointer ${
+                    label === initialLabel ? "text-emerald-400 font-medium" : "text-neutral-300"
+                  }`}
+                >
+                  {label}
+                </button>
+              </li>
+            ))}
+            {query.trim() && !exactMatch && (
+              <li>
+                <button
+                  onClick={() => handleSelect(query.trim())}
+                  className="w-full text-left px-3 py-1.5 text-xs text-emerald-400 hover:bg-neutral-800 transition-colors cursor-pointer border-t border-neutral-800"
+                >
+                  Add &ldquo;{query.trim()}&rdquo;
+                </button>
+              </li>
+            )}
+            {filtered.length === 0 && !query.trim() && (
+              <li className="px-3 py-2 text-xs text-neutral-600">No labels yet</li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -76,6 +135,19 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [myIp, setMyIp] = useState<string | null>(null);
   const [filterMyIp, setFilterMyIp] = useState(false);
+  const [dbLabels, setDbLabels] = useState<string[]>([]);
+
+  const fetchLabels = async () => {
+    try {
+      const res = await fetch("/api/labels");
+      if (res.ok) {
+        const data = await res.json();
+        setDbLabels(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchLogs = async () => {
     try {
@@ -93,6 +165,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchLogs();
+    fetchLabels();
 
     // Fetch user's IP address
     fetch("/api/my-ip")
@@ -109,12 +182,18 @@ export default function Dashboard() {
     // Optimistic update
     setLogs(prev => prev.map(log => log.id === id ? { ...log, label: newLabel } : log));
 
+    // Optimistically add to dbLabels if new
+    if (newLabel && !dbLabels.includes(newLabel)) {
+      setDbLabels(prev => [...prev, newLabel].sort());
+    }
+
     try {
       await fetch(`/api/logs/${id}/label`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label: newLabel || null }),
       });
+      fetchLabels();
     } catch (e) {
       console.error("Failed to update label:", e);
     }
@@ -247,6 +326,7 @@ export default function Dashboard() {
                           <LabelEditor
                             initialLabel={log.label || ""}
                             onSave={(newLabel) => handleLabelChange(log.id, newLabel)}
+                            dbLabels={dbLabels}
                           />
                         </td>
                         <td className="px-6 py-4 text-right">

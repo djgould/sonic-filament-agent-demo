@@ -33,6 +33,9 @@ export async function initDb() {
                 url TEXT,
                 label VARCHAR(255)
             );
+            
+            -- Add label column if it doesn't exist (for existing tables prior to Phase 3)
+            ALTER TABLE agent_attribution_logs ADD COLUMN IF NOT EXISTS label VARCHAR(255);
         `;
     } catch (e) {
         console.error("Failed to initialize database table:", e);
@@ -78,4 +81,17 @@ export async function getLogsFromDb(): Promise<AttributionEvent[]> {
         url: row.url,
         label: row.label
     }));
+}
+
+export async function getDistinctLabels(): Promise<string[]> {
+    const sql = getDb();
+    await initDb();
+
+    const rows = await sql`
+        SELECT DISTINCT label FROM agent_attribution_logs
+        WHERE label IS NOT NULL AND label != ''
+        ORDER BY label;
+    `;
+
+    return rows.map((row: any) => row.label);
 }
